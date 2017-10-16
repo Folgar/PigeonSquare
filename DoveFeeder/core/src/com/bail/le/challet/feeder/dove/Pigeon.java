@@ -6,7 +6,7 @@ import java.util.Iterator;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 
-public class Pigeon {
+public class Pigeon implements Runnable {
 
 	private Texture myTexture = new Texture(Gdx.files.internal("pigeon.png"));
 	private int xLoc = Gdx.input.getX() ;
@@ -15,10 +15,12 @@ public class Pigeon {
     private int ySpeed=1;
     private int gdxWidth;
     private int gdxHeight;
+    private MyGdxGame environment;
     
-    public Pigeon(int xspeed, int yspeed){
+    public Pigeon(int xspeed, int yspeed, MyGdxGame environment){
         this.xSpeed = xspeed;
         this.ySpeed = yspeed;
+        this.environment = environment;
     }
 
     public void Update(){
@@ -73,19 +75,67 @@ public class Pigeon {
 	
 	public void findClosestFood(ArrayList<Graine> graines)
 	{
+		
 		int closestX = 10000;
 		int closestY = 10000;
+		double bestDistance = 10000;
+		double distance;
+		Graine graine;
+		boolean oneGraineIsHealthy = false;
+		
 		Iterator<Graine> rectIter = graines.iterator();
+		
 		  while(rectIter.hasNext()){
-		     Graine myObject = rectIter.next();
-		     if(this.getxLoc()-myObject.getxLoc() > this.getxLoc()-closestX && this.getyLoc()-myObject.getyLoc() > this.getyLoc()-closestY)
-		     {
-		    	 closestX = myObject.getxLoc();
-		    	 closestY = myObject.getyLoc();
-		     }	     
+			  
+		     graine = rectIter.next();
+		     
+		     if(graine.isHealthy()) {
+		    	 oneGraineIsHealthy = true;
+		    	 distance = Math.sqrt(
+		    		 Math.pow(this.getxLoc() - graine.getxLoc(), 2.0)
+		    		 + Math.pow(this.getyLoc() - graine.getyLoc(), 2.0)
+		    		 );
+		     
+			     if(distance < bestDistance) {
+			    	 bestDistance = distance;
+			    	 closestX = graine.getxLoc();
+			    	 closestY = graine.getyLoc();
+			     }	
+		     }
+		  
 		  }
 		  
-		move(closestX,closestY);
+		  
+		  if(oneGraineIsHealthy)
+			  move(closestX,closestY);
+	}
+	
+	@Override
+	public void run() {
+		
+		if(environment.getGraines().size() > 0)
+	      {
+	    	  
+	    			this.findClosestFood(environment.getGraines());    	  
+	    	  
+	      }
+	      
+	      Iterator<Graine> rectIter3 = environment.getGraines().iterator();
+	      while(rectIter3.hasNext()){
+	          Graine myObject = rectIter3.next();
+	          if(myObject.getxLoc()==this.getxLoc() && myObject.getyLoc() == this.getyLoc() && myObject.isHealthy())
+	          {
+	        	  environment.getGraines().remove(myObject);
+	        	  break;
+	          }
+	          else
+	          {
+	        	  move(this.getxLoc(), this.getyLoc());
+	          }
+	      }
+	      
+	      environment.getBatch().draw(this.getMyTexture(), this.getxLoc(), this.getyLoc(), 100, 100);
+	      
 	}
 	
 }

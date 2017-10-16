@@ -7,7 +7,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector3;
 import java.util.ArrayList;
 import java.util.Iterator;
-
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.Date;
 import com.badlogic.gdx.ApplicationListener;
 
 public class MyGdxGame implements ApplicationListener {
@@ -27,12 +28,21 @@ public class MyGdxGame implements ApplicationListener {
   camera=new OrthographicCamera();
   pigeons = new ArrayList<Pigeon>();
   graines = new ArrayList<Graine>();
-  pigeon = new Pigeon(3,3);
-  pigeon.setxLoc(500);
-  pigeon.setyLoc(500);
-  pigeon.setGdxWidth(Gdx.graphics.getWidth());
-  pigeon.setGdxHeight(Gdx.graphics.getHeight());
-  pigeons.add(pigeon);
+
+  for(int i = 0; i < 4 ; i++) {
+	  
+	  pigeon = new Pigeon(3,3, this);
+	  
+	  pigeon.setxLoc(ThreadLocalRandom.current().nextInt(10, 1000));
+	  pigeon.setyLoc(ThreadLocalRandom.current().nextInt(10, 1000));
+	  
+	  pigeon.setGdxWidth(Gdx.graphics.getWidth());
+	  pigeon.setGdxHeight(Gdx.graphics.getHeight());
+	  pigeons.add(pigeon);
+	  
+	 
+  }
+  
 
  }
  
@@ -48,43 +58,37 @@ public class MyGdxGame implements ApplicationListener {
       camera.unproject(touchPos);
       x=(int) touchPos.x-75; 
       y=(int) touchPos.y-75;
-      graine=new Graine(); 
+      graine=new Graine(new Date()); 
       graine.setxLoc(x);
       graine.setyLoc(y);
       graines.add(graine);
   }
-    
+  
+  Date date;
+  
   Iterator<Graine> rectIter = graines.iterator();
   while(rectIter.hasNext()){
       Graine myObject = rectIter.next();
       myObject.Update();
-      batch.draw(myObject.getMyTexture(), myObject.getxLoc(), myObject.getyLoc(), 100, 100);
+      date = new Date();
+      if(date.getTime() - myObject.getTimeOfDrop().getTime() > 10000) 
+    	  myObject.setHealthy(false);
+      
+      if(myObject.isHealthy())
+    	  batch.draw(myObject.getMyTexture(), myObject.getxLoc(), myObject.getyLoc(), 100, 100);
+      else
+    	  batch.draw(myObject.getMyTexture(), myObject.getxLoc(), myObject.getyLoc(), 50, 50);
+    	  
   }
   
   Iterator<Pigeon> rectIter2 = pigeons.iterator();
   
   while(rectIter2.hasNext()){
       Pigeon pigeon = rectIter2.next();
-      if(graines.size() > 0)
-      {
-    	  
-    			pigeon.findClosestFood(graines);    	  
-    	  
+      pigeon.run();
       }
-      
-      Iterator<Graine> rectIter3 = graines.iterator();
-      while(rectIter3.hasNext()){
-          Graine myObject = rectIter3.next();
-          if(myObject.getxLoc()==pigeon.getxLoc() && myObject.getyLoc() == pigeon.getyLoc())
-          {
-        	  
-        	  graines.remove(myObject);
-        	  break;
-          }
-      }
-      
-      batch.draw(pigeon.getMyTexture(), pigeon.getxLoc(), pigeon.getyLoc(), 100, 100);
-  }
+  
+  
   
   batch.end();
   
@@ -107,4 +111,46 @@ public class MyGdxGame implements ApplicationListener {
  public void dispose() {
   batch.dispose();
  }
+
+/**
+ * @return the graines
+ */
+public ArrayList<Graine> getGraines() {
+	return graines;
+}
+
+/**
+ * @param graines the graines to set
+ */
+public void setGraines(ArrayList<Graine> graines) {
+	this.graines = graines;
+}
+
+/**
+ * @return the pigeons
+ */
+public ArrayList<Pigeon> getPigeons() {
+	return pigeons;
+}
+
+/**
+ * @param pigeons the pigeons to set
+ */
+public void setPigeons(ArrayList<Pigeon> pigeons) {
+	this.pigeons = pigeons;
+}
+
+/**
+ * @return the batch
+ */
+public SpriteBatch getBatch() {
+	return batch;
+}
+
+/**
+ * @param batch the batch to set
+ */
+public void setBatch(SpriteBatch batch) {
+	this.batch = batch;
+}
 }
